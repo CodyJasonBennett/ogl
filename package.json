@@ -4,6 +4,9 @@
     "description": "WebGL Library",
     "main": "src/index.mjs",
     "sideEffects": false,
+    "scripts": {
+        "postinstall": "npx rollup src/index.mjs --file ogl.cjs --format cjs && npx json -I -f package.json -e \"this.module=\\\"./src/index.mjs\\\";this.main=\\\"./ogl.cjs\\\"\""
+    },
     "directories": {
         "example": "examples"
     },
