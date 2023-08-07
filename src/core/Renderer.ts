@@ -370,6 +370,7 @@ export class Renderer {
         if (camera && frustumCull) camera.updateFrustum();
 
         // Get visible
+        // @ts-ignore
         scene.traverse((node: Mesh) => {
             if (!node.visible) return true;
             if (!node.draw) return;

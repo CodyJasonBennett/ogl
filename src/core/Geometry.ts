@@ -322,7 +322,7 @@ export class Geometry {
 
         let maxRadiusSq = 0;
         for (let i = 0, l = array.length; i < l; i += stride) {
-            tempVec3.fromArray(array, i);
+            tempVec3.fromArray(array as number[], i);
             maxRadiusSq = Math.max(maxRadiusSq, this.bounds.center.squaredDistance(tempVec3));
         }
 
