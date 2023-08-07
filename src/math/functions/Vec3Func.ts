@@ -1,4 +1,10 @@
+import { Mat3Tuple } from './Mat3Func.js';
+import { Mat4Tuple } from './Mat4Func.js';
+import { QuatTuple } from './QuatFunc.js';
+
 const EPSILON = 0.000001;
+
+export type Vec3Tuple = [x: number, y: number, z: number];
 
 /**
  * Calculates the length of a vec3
@@ -6,7 +12,7 @@ const EPSILON = 0.000001;
  * @param {vec3} a vector to calculate length of
  * @returns {Number} length of a
  */
-export function length(a) {
+export function length(a: Vec3Tuple): number {
     let x = a[0];
     let y = a[1];
     let z = a[2];
@@ -20,7 +26,7 @@ export function length(a) {
  * @param {vec3} a the source vector
  * @returns {vec3} out
  */
-export function copy(out, a) {
+export function copy(out: Vec3Tuple, a: Vec3Tuple): Vec3Tuple {
     out[0] = a[0];
     out[1] = a[1];
     out[2] = a[2];
@@ -36,7 +42,7 @@ export function copy(out, a) {
  * @param {Number} z Z component
  * @returns {vec3} out
  */
-export function set(out, x, y, z) {
+export function set(out: Vec3Tuple, x: number, y: number, z: number): Vec3Tuple {
     out[0] = x;
     out[1] = y;
     out[2] = z;
@@ -51,7 +57,7 @@ export function set(out, x, y, z) {
  * @param {vec3} b the second operand
  * @returns {vec3} out
  */
-export function add(out, a, b) {
+export function add(out: Vec3Tuple, a: Vec3Tuple, b: Vec3Tuple): Vec3Tuple {
     out[0] = a[0] + b[0];
     out[1] = a[1] + b[1];
     out[2] = a[2] + b[2];
@@ -66,7 +72,7 @@ export function add(out, a, b) {
  * @param {vec3} b the second operand
  * @returns {vec3} out
  */
-export function subtract(out, a, b) {
+export function subtract(out: Vec3Tuple, a: Vec3Tuple, b: Vec3Tuple): Vec3Tuple {
     out[0] = a[0] - b[0];
     out[1] = a[1] - b[1];
     out[2] = a[2] - b[2];
@@ -81,7 +87,7 @@ export function subtract(out, a, b) {
  * @param {vec3} b the second operand
  * @returns {vec3} out
  */
-export function multiply(out, a, b) {
+export function multiply(out: Vec3Tuple, a: Vec3Tuple, b: Vec3Tuple): Vec3Tuple {
     out[0] = a[0] * b[0];
     out[1] = a[1] * b[1];
     out[2] = a[2] * b[2];
@@ -96,7 +102,7 @@ export function multiply(out, a, b) {
  * @param {vec3} b the second operand
  * @returns {vec3} out
  */
-export function divide(out, a, b) {
+export function divide(out: Vec3Tuple, a: Vec3Tuple, b: Vec3Tuple): Vec3Tuple {
     out[0] = a[0] / b[0];
     out[1] = a[1] / b[1];
     out[2] = a[2] / b[2];
@@ -111,7 +117,7 @@ export function divide(out, a, b) {
  * @param {Number} b amount to scale the vector by
  * @returns {vec3} out
  */
-export function scale(out, a, b) {
+export function scale(out: Vec3Tuple, a: Vec3Tuple, b: number): Vec3Tuple {
     out[0] = a[0] * b;
     out[1] = a[1] * b;
     out[2] = a[2] * b;
@@ -125,7 +131,7 @@ export function scale(out, a, b) {
  * @param {vec3} b the second operand
  * @returns {Number} distance between a and b
  */
-export function distance(a, b) {
+export function distance(a: Vec3Tuple, b: Vec3Tuple): number {
     let x = b[0] - a[0];
     let y = b[1] - a[1];
     let z = b[2] - a[2];
@@ -139,7 +145,7 @@ export function distance(a, b) {
  * @param {vec3} b the second operand
  * @returns {Number} squared distance between a and b
  */
-export function squaredDistance(a, b) {
+export function squaredDistance(a: Vec3Tuple, b: Vec3Tuple): number {
     let x = b[0] - a[0];
     let y = b[1] - a[1];
     let z = b[2] - a[2];
@@ -152,7 +158,7 @@ export function squaredDistance(a, b) {
  * @param {vec3} a vector to calculate squared length of
  * @returns {Number} squared length of a
  */
-export function squaredLength(a) {
+export function squaredLength(a: Vec3Tuple): number {
     let x = a[0];
     let y = a[1];
     let z = a[2];
@@ -166,7 +172,7 @@ export function squaredLength(a) {
  * @param {vec3} a vector to negate
  * @returns {vec3} out
  */
-export function negate(out, a) {
+export function negate(out: Vec3Tuple, a: Vec3Tuple): Vec3Tuple {
     out[0] = -a[0];
     out[1] = -a[1];
     out[2] = -a[2];
@@ -180,7 +186,7 @@ export function negate(out, a) {
  * @param {vec3} a vector to invert
  * @returns {vec3} out
  */
-export function inverse(out, a) {
+export function inverse(out: Vec3Tuple, a: Vec3Tuple): Vec3Tuple {
     out[0] = 1.0 / a[0];
     out[1] = 1.0 / a[1];
     out[2] = 1.0 / a[2];
@@ -194,7 +200,7 @@ export function inverse(out, a) {
  * @param {vec3} a vector to normalize
  * @returns {vec3} out
  */
-export function normalize(out, a) {
+export function normalize(out: Vec3Tuple, a: Vec3Tuple): Vec3Tuple {
     let x = a[0];
     let y = a[1];
     let z = a[2];
@@ -216,7 +222,7 @@ export function normalize(out, a) {
  * @param {vec3} b the second operand
  * @returns {Number} dot product of a and b
  */
-export function dot(a, b) {
+export function dot(a: Vec3Tuple, b: Vec3Tuple): number {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
@@ -228,7 +234,7 @@ export function dot(a, b) {
  * @param {vec3} b the second operand
  * @returns {vec3} out
  */
-export function cross(out, a, b) {
+export function cross(out: Vec3Tuple, a: Vec3Tuple, b: Vec3Tuple): Vec3Tuple {
     let ax = a[0],
         ay = a[1],
         az = a[2];
@@ -251,7 +257,7 @@ export function cross(out, a, b) {
  * @param {Number} t interpolation amount between the two inputs
  * @returns {vec3} out
  */
-export function lerp(out, a, b, t) {
+export function lerp(out: Vec3Tuple, a: Vec3Tuple, b: Vec3Tuple, t: number): Vec3Tuple {
     let ax = a[0];
     let ay = a[1];
     let az = a[2];
@@ -270,7 +276,7 @@ export function lerp(out, a, b, t) {
  * @param {mat4} m matrix to transform with
  * @returns {vec3} out
  */
-export function transformMat4(out, a, m) {
+export function transformMat4(out: Vec3Tuple, a: Vec3Tuple, m: Mat4Tuple): Vec3Tuple {
     let x = a[0],
         y = a[1],
         z = a[2];
@@ -286,7 +292,7 @@ export function transformMat4(out, a, m) {
  * Same as above but doesn't apply translation.
  * Useful for rays.
  */
-export function scaleRotateMat4(out, a, m) {
+export function scaleRotateMat4(out: Vec3Tuple, a: Vec3Tuple, m: Mat4Tuple): Vec3Tuple {
     let x = a[0],
         y = a[1],
         z = a[2];
@@ -306,7 +312,7 @@ export function scaleRotateMat4(out, a, m) {
  * @param {mat3} m the 3x3 matrix to transform with
  * @returns {vec3} out
  */
-export function transformMat3(out, a, m) {
+export function transformMat3(out: Vec3Tuple, a: Vec3Tuple, m: Mat3Tuple): Vec3Tuple {
     let x = a[0],
         y = a[1],
         z = a[2];
@@ -324,7 +330,7 @@ export function transformMat3(out, a, m) {
  * @param {quat} q quaternion to transform with
  * @returns {vec3} out
  */
-export function transformQuat(out, a, q) {
+export function transformQuat(out: Vec3Tuple, a: Vec3Tuple, q: QuatTuple): Vec3Tuple {
     // benchmarks: https://jsperf.com/quaternion-transform-vec3-implementations-fixed
 
     let x = a[0],
@@ -365,10 +371,10 @@ export function transformQuat(out, a, q) {
  * @returns {Number} The angle in radians
  */
 export const angle = (function () {
-    const tempA = [0, 0, 0];
-    const tempB = [0, 0, 0];
+    const tempA: Vec3Tuple = [0, 0, 0];
+    const tempB: Vec3Tuple = [0, 0, 0];
 
-    return function (a, b) {
+    return function (a: Vec3Tuple, b: Vec3Tuple): number {
         copy(tempA, a);
         copy(tempB, b);
 
@@ -394,6 +400,6 @@ export const angle = (function () {
  * @param {vec3} b The second vector.
  * @returns {Boolean} True if the vectors are equal, false otherwise.
  */
-export function exactEquals(a, b) {
+export function exactEquals(a: Vec3Tuple, b: Vec3Tuple): boolean {
     return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 }

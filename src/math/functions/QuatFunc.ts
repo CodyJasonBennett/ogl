@@ -1,4 +1,9 @@
+import { EulerOrder, EulerTuple } from './EulerFunc.js';
+import { Mat3Tuple } from './Mat3Func.js';
+import { Vec3Tuple } from './Vec3Func.js';
 import * as vec4 from './Vec4Func.js';
+
+export type QuatTuple = [x: number, y: number, z: number, w: number];
 
 /**
  * Set a quat to the identity quaternion
@@ -6,7 +11,7 @@ import * as vec4 from './Vec4Func.js';
  * @param {quat} out the receiving quaternion
  * @returns {quat} out
  */
-export function identity(out) {
+export function identity(out: QuatTuple): QuatTuple {
     out[0] = 0;
     out[1] = 0;
     out[2] = 0;
@@ -23,7 +28,7 @@ export function identity(out) {
  * @param {Number} rad the angle in radians
  * @returns {quat} out
  **/
-export function setAxisAngle(out, axis, rad) {
+export function setAxisAngle(out: QuatTuple, axis: Vec3Tuple, rad: number): QuatTuple {
     rad = rad * 0.5;
     let s = Math.sin(rad);
     out[0] = s * axis[0];
@@ -41,7 +46,7 @@ export function setAxisAngle(out, axis, rad) {
  * @param {quat} b the second operand
  * @returns {quat} out
  */
-export function multiply(out, a, b) {
+export function multiply(out: QuatTuple, a: QuatTuple, b: QuatTuple): QuatTuple {
     let ax = a[0],
         ay = a[1],
         az = a[2],
@@ -66,7 +71,7 @@ export function multiply(out, a, b) {
  * @param {number} rad angle (in radians) to rotate
  * @returns {quat} out
  */
-export function rotateX(out, a, rad) {
+export function rotateX(out: QuatTuple, a: QuatTuple, rad: number): QuatTuple {
     rad *= 0.5;
 
     let ax = a[0],
@@ -91,7 +96,7 @@ export function rotateX(out, a, rad) {
  * @param {number} rad angle (in radians) to rotate
  * @returns {quat} out
  */
-export function rotateY(out, a, rad) {
+export function rotateY(out: QuatTuple, a: QuatTuple, rad: number): QuatTuple {
     rad *= 0.5;
 
     let ax = a[0],
@@ -116,7 +121,7 @@ export function rotateY(out, a, rad) {
  * @param {number} rad angle (in radians) to rotate
  * @returns {quat} out
  */
-export function rotateZ(out, a, rad) {
+export function rotateZ(out: QuatTuple, a: QuatTuple, rad: number): QuatTuple {
     rad *= 0.5;
 
     let ax = a[0],
@@ -142,7 +147,7 @@ export function rotateZ(out, a, rad) {
  * @param {Number} t interpolation amount between the two inputs
  * @returns {quat} out
  */
-export function slerp(out, a, b, t) {
+export function slerp(out: QuatTuple, a: QuatTuple, b: QuatTuple, t: number): QuatTuple {
     // benchmarks:
     //    http://jsperf.com/quaternion-slerp-implementations
     let ax = a[0],
@@ -195,7 +200,7 @@ export function slerp(out, a, b, t) {
  * @param {quat} a quat to calculate inverse of
  * @returns {quat} out
  */
-export function invert(out, a) {
+export function invert(out: QuatTuple, a: QuatTuple): QuatTuple {
     let a0 = a[0],
         a1 = a[1],
         a2 = a[2],
@@ -220,7 +225,7 @@ export function invert(out, a) {
  * @param {quat} a quat to calculate conjugate of
  * @returns {quat} out
  */
-export function conjugate(out, a) {
+export function conjugate(out: QuatTuple, a: QuatTuple): QuatTuple {
     out[0] = -a[0];
     out[1] = -a[1];
     out[2] = -a[2];
@@ -239,7 +244,7 @@ export function conjugate(out, a) {
  * @returns {quat} out
  * @function
  */
-export function fromMat3(out, m) {
+export function fromMat3(out: QuatTuple, m: Mat3Tuple): QuatTuple {
     // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
     // article "Quaternion Calculus and Fast Animation".
     let fTrace = m[0] + m[4] + m[8];
@@ -281,7 +286,7 @@ export function fromMat3(out, m) {
  * @returns {quat} out
  * @function
  */
-export function fromEuler(out, euler, order = 'YXZ') {
+export function fromEuler(out: QuatTuple, euler: EulerTuple, order: EulerOrder = 'YXZ'): QuatTuple {
     let sx = Math.sin(euler[0] * 0.5);
     let cx = Math.cos(euler[0] * 0.5);
     let sy = Math.sin(euler[1] * 0.5);

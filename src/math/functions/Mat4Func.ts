@@ -1,4 +1,26 @@
+import { Vec3Tuple } from './Vec3Func.js';
+import { QuatTuple } from './QuatFunc.js';
+
 const EPSILON = 0.000001;
+
+export type Mat4Tuple = [
+    m00: number,
+    m01: number,
+    m02: number,
+    m03: number,
+    m10: number,
+    m11: number,
+    m12: number,
+    m13: number,
+    m20: number,
+    m21: number,
+    m22: number,
+    m23: number,
+    m30: number,
+    m31: number,
+    m32: number,
+    m33: number
+];
 
 /**
  * Copy the values from one mat4 to another
@@ -7,7 +29,7 @@ const EPSILON = 0.000001;
  * @param {mat4} a the source matrix
  * @returns {mat4} out
  */
-export function copy(out, a) {
+export function copy(out: Mat4Tuple, a: Mat4Tuple): Mat4Tuple {
     out[0] = a[0];
     out[1] = a[1];
     out[2] = a[2];
@@ -33,7 +55,25 @@ export function copy(out, a) {
  * @param {mat4} out the receiving matrix
  * @returns {mat4} out
  */
-export function set(out, m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33) {
+export function set(
+    out: Mat4Tuple,
+    m00: number,
+    m01: number,
+    m02: number,
+    m03: number,
+    m10: number,
+    m11: number,
+    m12: number,
+    m13: number,
+    m20: number,
+    m21: number,
+    m22: number,
+    m23: number,
+    m30: number,
+    m31: number,
+    m32: number,
+    m33: number
+): Mat4Tuple {
     out[0] = m00;
     out[1] = m01;
     out[2] = m02;
@@ -59,7 +99,7 @@ export function set(out, m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, 
  * @param {mat4} out the receiving matrix
  * @returns {mat4} out
  */
-export function identity(out) {
+export function identity(out: Mat4Tuple): Mat4Tuple {
     out[0] = 1;
     out[1] = 0;
     out[2] = 0;
@@ -86,7 +126,7 @@ export function identity(out) {
  * @param {mat4} a the source matrix
  * @returns {mat4} out
  */
-export function transpose(out, a) {
+export function transpose(out: Mat4Tuple, a: Mat4Tuple): Mat4Tuple {
     // If we are transposing ourselves we can skip a few steps but have to cache some values
     if (out === a) {
         let a01 = a[1],
@@ -137,7 +177,7 @@ export function transpose(out, a) {
  * @param {mat4} a the source matrix
  * @returns {mat4} out
  */
-export function invert(out, a) {
+export function invert(out: Mat4Tuple, a: Mat4Tuple): Mat4Tuple {
     let a00 = a[0],
         a01 = a[1],
         a02 = a[2],
@@ -172,7 +212,7 @@ export function invert(out, a) {
     let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
 
     if (!det) {
-        return null;
+        return out;
     }
     det = 1.0 / det;
 
@@ -202,7 +242,7 @@ export function invert(out, a) {
  * @param {mat4} a the source matrix
  * @returns {Number} determinant of a
  */
-export function determinant(a) {
+export function determinant(a: Mat4Tuple): number {
     let a00 = a[0],
         a01 = a[1],
         a02 = a[2],
@@ -245,7 +285,7 @@ export function determinant(a) {
  * @param {mat4} b the second operand
  * @returns {mat4} out
  */
-export function multiply(out, a, b) {
+export function multiply(out: Mat4Tuple, a: Mat4Tuple, b: Mat4Tuple): Mat4Tuple {
     let a00 = a[0],
         a01 = a[1],
         a02 = a[2],
@@ -310,13 +350,13 @@ export function multiply(out, a, b) {
  * @param {vec3} v vector to translate by
  * @returns {mat4} out
  */
-export function translate(out, a, v) {
+export function translate(out: Mat4Tuple, a: Mat4Tuple, v: Vec3Tuple): Mat4Tuple {
     let x = v[0],
         y = v[1],
         z = v[2];
-    let a00, a01, a02, a03;
-    let a10, a11, a12, a13;
-    let a20, a21, a22, a23;
+    let a00: number, a01: number, a02: number, a03: number;
+    let a10: number, a11: number, a12: number, a13: number;
+    let a20: number, a21: number, a22: number, a23: number;
 
     if (a === out) {
         out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
@@ -367,7 +407,7 @@ export function translate(out, a, v) {
  * @param {vec3} v the vec3 to scale the matrix by
  * @returns {mat4} out
  **/
-export function scale(out, a, v) {
+export function scale(out: Mat4Tuple, a: Mat4Tuple, v: Vec3Tuple): Mat4Tuple {
     let x = v[0],
         y = v[1],
         z = v[2];
@@ -400,21 +440,21 @@ export function scale(out, a, v) {
  * @param {vec3} axis the axis to rotate around
  * @returns {mat4} out
  */
-export function rotate(out, a, rad, axis) {
+export function rotate(out: Mat4Tuple, a: Mat4Tuple, rad: number, axis: Vec3Tuple): Mat4Tuple {
     let x = axis[0],
         y = axis[1],
         z = axis[2];
     let len = Math.hypot(x, y, z);
-    let s, c, t;
-    let a00, a01, a02, a03;
-    let a10, a11, a12, a13;
-    let a20, a21, a22, a23;
-    let b00, b01, b02;
-    let b10, b11, b12;
-    let b20, b21, b22;
+    let s: number, c: number, t: number;
+    let a00: number, a01: number, a02: number, a03: number;
+    let a10: number, a11: number, a12: number, a13: number;
+    let a20: number, a21: number, a22: number, a23: number;
+    let b00: number, b01: number, b02: number;
+    let b10: number, b11: number, b12: number;
+    let b20: number, b21: number, b22: number;
 
     if (Math.abs(len) < EPSILON) {
-        return null;
+        return out;
     }
 
     len = 1 / len;
@@ -483,7 +523,7 @@ export function rotate(out, a, rad, axis) {
  * @param  {mat4} mat Matrix to be decomposed (input)
  * @return {vec3} out
  */
-export function getTranslation(out, mat) {
+export function getTranslation(out: Vec3Tuple, mat: Mat4Tuple): Vec3Tuple {
     out[0] = mat[12];
     out[1] = mat[13];
     out[2] = mat[14];
@@ -501,7 +541,7 @@ export function getTranslation(out, mat) {
  * @param  {mat4} mat Matrix to be decomposed (input)
  * @return {vec3} out
  */
-export function getScaling(out, mat) {
+export function getScaling(out: Vec3Tuple, mat: Mat4Tuple): Vec3Tuple {
     let m11 = mat[0];
     let m12 = mat[1];
     let m13 = mat[2];
@@ -519,7 +559,7 @@ export function getScaling(out, mat) {
     return out;
 }
 
-export function getMaxScaleOnAxis(mat) {
+export function getMaxScaleOnAxis(mat: Mat4Tuple): number {
     let m11 = mat[0];
     let m12 = mat[1];
     let m13 = mat[2];
@@ -547,9 +587,9 @@ export function getMaxScaleOnAxis(mat) {
  * @return {quat} out
  */
 export const getRotation = (function () {
-    const temp = [1, 1, 1];
+    const temp: Vec3Tuple = [1, 1, 1];
 
-    return function (out, mat) {
+    return function (out: QuatTuple, mat: Mat4Tuple): QuatTuple {
         let scaling = temp;
         getScaling(scaling, mat);
 
@@ -617,7 +657,7 @@ export const getRotation = (function () {
  * @param {vec3} s Scaling vector
  * @returns {mat4} out
  */
-export function fromRotationTranslationScale(out, q, v, s) {
+export function fromRotationTranslationScale(out: Mat4Tuple, q: QuatTuple, v: Vec3Tuple, s: Vec3Tuple): Mat4Tuple {
     // Quaternion math
     let x = q[0],
         y = q[1],
@@ -668,7 +708,7 @@ export function fromRotationTranslationScale(out, q, v, s) {
  *
  * @returns {mat4} out
  */
-export function fromQuat(out, q) {
+export function fromQuat(out: Mat4Tuple, q: QuatTuple): Mat4Tuple {
     let x = q[0],
         y = q[1],
         z = q[2],
@@ -720,7 +760,7 @@ export function fromQuat(out, q) {
  * @param {number} far Far bound of the frustum
  * @returns {mat4} out
  */
-export function perspective(out, fovy, aspect, near, far) {
+export function perspective(out: Mat4Tuple, fovy: number, aspect: number, near: number, far: number): Mat4Tuple {
     let f = 1.0 / Math.tan(fovy / 2);
     let nf = 1 / (near - far);
     out[0] = f / aspect;
@@ -754,7 +794,7 @@ export function perspective(out, fovy, aspect, near, far) {
  * @param {number} far Far bound of the frustum
  * @returns {mat4} out
  */
-export function ortho(out, left, right, bottom, top, near, far) {
+export function ortho(out: Mat4Tuple, left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4Tuple {
     let lr = 1 / (left - right);
     let bt = 1 / (bottom - top);
     let nf = 1 / (near - far);
@@ -786,7 +826,7 @@ export function ortho(out, left, right, bottom, top, near, far) {
  * @param {vec3} up vec3 pointing up
  * @returns {mat4} out
  */
-export function targetTo(out, eye, target, up) {
+export function targetTo(out: Mat4Tuple, eye: Vec3Tuple, target: Vec3Tuple, up: Vec3Tuple): Mat4Tuple {
     let eyex = eye[0],
         eyey = eye[1],
         eyez = eye[2],
@@ -860,7 +900,7 @@ export function targetTo(out, eye, target, up) {
  * @param {mat4} b the second operand
  * @returns {mat4} out
  */
-export function add(out, a, b) {
+export function add(out: Mat4Tuple, a: Mat4Tuple, b: Mat4Tuple): Mat4Tuple {
     out[0] = a[0] + b[0];
     out[1] = a[1] + b[1];
     out[2] = a[2] + b[2];
@@ -888,7 +928,7 @@ export function add(out, a, b) {
  * @param {mat4} b the second operand
  * @returns {mat4} out
  */
-export function subtract(out, a, b) {
+export function subtract(out: Mat4Tuple, a: Mat4Tuple, b: Mat4Tuple): Mat4Tuple {
     out[0] = a[0] - b[0];
     out[1] = a[1] - b[1];
     out[2] = a[2] - b[2];
@@ -916,7 +956,7 @@ export function subtract(out, a, b) {
  * @param {Number} b amount to scale the matrix's elements by
  * @returns {mat4} out
  */
-export function multiplyScalar(out, a, b) {
+export function multiplyScalar(out: Mat4Tuple, a: Mat4Tuple, b: number): Mat4Tuple {
     out[0] = a[0] * b;
     out[1] = a[1] * b;
     out[2] = a[2] * b;

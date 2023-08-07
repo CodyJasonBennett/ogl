@@ -10,9 +10,16 @@ import * as ColorFunc from './functions/ColorFunc.js';
 // new Color(0x4f27e8) - Number
 // new Color('red') - Color name string (short list in ColorFunc.js)
 
-export class Color extends Array {
-    constructor(color) {
+export class Color extends Array<number> {
+    constructor(color: [number, number, number]);
+    constructor(color: number, g: number, b: number);
+    constructor(color: string);
+    constructor(color: 'black' | 'white' | 'red' | 'green' | 'blue' | 'fuchsia' | 'cyan' | 'yellow' | 'orange');
+    constructor(color?: number);
+    constructor(color?: ColorFunc.ColorRepresentation) {
+        // @ts-ignore
         if (Array.isArray(color)) return super(...color);
+        // @ts-ignore
         return super(...ColorFunc.parseColor(...arguments));
     }
 
@@ -40,12 +47,19 @@ export class Color extends Array {
         this[2] = v;
     }
 
-    set(color) {
+    set(color: [number, number, number]): this;
+    set(color: number, g: number, b: number): this;
+    set(color: string): this;
+    set(color: 'black' | 'white' | 'red' | 'green' | 'blue' | 'fuchsia' | 'cyan' | 'yellow' | 'orange'): this;
+    set(color: number): this;
+    set(color?: ColorFunc.ColorRepresentation): this {
+        // @ts-ignore
         if (Array.isArray(color)) return this.copy(color);
+        // @ts-ignore
         return this.copy(ColorFunc.parseColor(...arguments));
     }
 
-    copy(v) {
+    copy(v: Color): this {
         this[0] = v[0];
         this[1] = v[1];
         this[2] = v[2];
