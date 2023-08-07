@@ -1,9 +1,42 @@
 // TODO: test stencil and depth
+import { OGLRenderingContext } from './Renderer.js';
 import { Texture } from './Texture.js';
 
+export interface RenderTargetOptions {
+    width: number;
+    height: number;
+    target: GLenum;
+    color: number;
+    depth: boolean;
+    stencil: boolean;
+    depthTexture: boolean;
+    wrapS: GLenum;
+    wrapT: GLenum;
+    minFilter: GLenum;
+    magFilter: GLenum;
+    type: GLenum;
+    format: GLenum;
+    internalFormat: GLenum;
+    unpackAlignment: number;
+    premultiplyAlpha: boolean;
+}
+
 export class RenderTarget {
+    gl: OGLRenderingContext;
+    width: number;
+    height: number;
+    depth: boolean;
+    buffer: WebGLFramebuffer;
+    target: number;
+    textures: Texture[];
+    texture: Texture;
+    depthTexture: Texture;
+    depthBuffer: WebGLRenderbuffer;
+    stencilBuffer: WebGLRenderbuffer;
+    depthStencilBuffer: WebGLRenderbuffer;
+
     constructor(
-        gl,
+        gl: OGLRenderingContext,
         {
             width = gl.canvas.width,
             height = gl.canvas.height,
@@ -21,18 +54,18 @@ export class RenderTarget {
             internalFormat = format,
             unpackAlignment,
             premultiplyAlpha,
-        } = {}
+        }: Partial<RenderTargetOptions> = {}
     ) {
         this.gl = gl;
         this.width = width;
         this.height = height;
         this.depth = depth;
-        this.buffer = this.gl.createFramebuffer();
+        this.buffer = this.gl.createFramebuffer()!;
         this.target = target;
         this.gl.renderer.bindFramebuffer(this);
 
         this.textures = [];
-        const drawBuffers = [];
+        const drawBuffers: number[] = [];
 
         // create and attach required num of color textures
         for (let i = 0; i < color; i++) {
@@ -80,21 +113,21 @@ export class RenderTarget {
         } else {
             // Render buffers
             if (depth && !stencil) {
-                this.depthBuffer = this.gl.createRenderbuffer();
+                this.depthBuffer = this.gl.createRenderbuffer()!;
                 this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthBuffer);
                 this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
                 this.gl.framebufferRenderbuffer(this.target, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.depthBuffer);
             }
 
             if (stencil && !depth) {
-                this.stencilBuffer = this.gl.createRenderbuffer();
+                this.stencilBuffer = this.gl.createRenderbuffer()!;
                 this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.stencilBuffer);
                 this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.STENCIL_INDEX8, width, height);
                 this.gl.framebufferRenderbuffer(this.target, this.gl.STENCIL_ATTACHMENT, this.gl.RENDERBUFFER, this.stencilBuffer);
             }
 
             if (depth && stencil) {
-                this.depthStencilBuffer = this.gl.createRenderbuffer();
+                this.depthStencilBuffer = this.gl.createRenderbuffer()!;
                 this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthStencilBuffer);
                 this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_STENCIL, width, height);
                 this.gl.framebufferRenderbuffer(this.target, this.gl.DEPTH_STENCIL_ATTACHMENT, this.gl.RENDERBUFFER, this.depthStencilBuffer);
@@ -104,7 +137,7 @@ export class RenderTarget {
         this.gl.renderer.bindFramebuffer({ target: this.target });
     }
 
-    setSize(width, height) {
+    setSize(width: number, height: number): void {
         if (this.width === width && this.height === height) return;
 
         this.width = width;

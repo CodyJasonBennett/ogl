@@ -4,6 +4,19 @@ import { Mat4 } from '../math/Mat4.js';
 import { Euler } from '../math/Euler.js';
 
 export class Transform {
+    parent: Transform | null;
+    children: Transform[];
+    visible: boolean;
+    matrix: Mat4;
+    worldMatrix: Mat4;
+    matrixAutoUpdate: boolean;
+    worldMatrixNeedsUpdate: boolean;
+    position: Vec3;
+    scale: Vec3;
+    up: Vec3;
+    quaternion: Quat;
+    rotation: Euler;
+
     constructor() {
         this.parent = null;
         this.children = [];
@@ -23,23 +36,23 @@ export class Transform {
         this.quaternion.onChange = () => this.rotation.fromQuaternion(this.quaternion);
     }
 
-    setParent(parent, notifyParent = true) {
+    setParent(parent: Transform | null, notifyParent: boolean = true): void {
         if (this.parent && parent !== this.parent) this.parent.removeChild(this, false);
         this.parent = parent;
         if (notifyParent && parent) parent.addChild(this, false);
     }
 
-    addChild(child, notifyChild = true) {
+    addChild(child: Transform, notifyChild: boolean = true): void {
         if (!~this.children.indexOf(child)) this.children.push(child);
         if (notifyChild) child.setParent(this, false);
     }
 
-    removeChild(child, notifyChild = true) {
+    removeChild(child: Transform, notifyChild: boolean = true): void {
         if (!!~this.children.indexOf(child)) this.children.splice(this.children.indexOf(child), 1);
         if (notifyChild) child.setParent(null, false);
     }
 
-    updateMatrixWorld(force) {
+    updateMatrixWorld(force?: boolean): void {
         if (this.matrixAutoUpdate) this.updateMatrix();
         if (this.worldMatrixNeedsUpdate || force) {
             if (this.parent === null) this.worldMatrix.copy(this.matrix);
@@ -53,12 +66,12 @@ export class Transform {
         }
     }
 
-    updateMatrix() {
+    updateMatrix(): void {
         this.matrix.compose(this.quaternion, this.position, this.scale);
         this.worldMatrixNeedsUpdate = true;
     }
 
-    traverse(callback) {
+    traverse(callback: (node: Transform) => boolean | void): void {
         // Return true in callback to stop traversing children
         if (callback(this)) return;
         for (let i = 0, l = this.children.length; i < l; i++) {
@@ -66,14 +79,14 @@ export class Transform {
         }
     }
 
-    decompose() {
+    decompose(): void {
         this.matrix.getTranslation(this.position);
         this.matrix.getRotation(this.quaternion);
         this.matrix.getScaling(this.scale);
         this.rotation.fromQuaternion(this.quaternion);
     }
 
-    lookAt(target, invert = false) {
+    lookAt(target: Vec3, invert: boolean = false): void {
         if (invert) this.matrix.lookAt(this.position, target, this.up);
         else this.matrix.lookAt(target, this.position, this.up);
         this.matrix.getRotation(this.quaternion);

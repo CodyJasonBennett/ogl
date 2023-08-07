@@ -2,14 +2,66 @@
 // TODO: upload identity matrix if null ?
 // TODO: sampler Cube
 
+import { OGLRenderingContext } from './Renderer';
+
 let ID = 1;
 
 // cache of typed arrays used to flatten uniform arrays
 const arrayCacheF32 = {};
 
+export interface ProgramOptions {
+    vertex: string;
+    fragment: string;
+    uniforms: {
+        [name: string]: {
+            value: any;
+        };
+    };
+    transparent: boolean;
+    cullFace: GLenum | false;
+    frontFace: GLenum;
+    depthTest: boolean;
+    depthWrite: boolean;
+    depthFunc: GLenum;
+}
+export interface BlendFunc {
+    src?: GLenum;
+    dst?: GLenum;
+    srcAlpha?: number;
+    dstAlpha?: number;
+}
+export interface BlendEquation {
+    modeRGB?: number;
+    modeAlpha?: number;
+}
+export interface UniformInfo extends WebGLActiveInfo {
+    uniformName: string;
+    nameComponents: string[];
+    isStruct: boolean;
+    isStructArray: boolean;
+    structIndex: number;
+    structProperty: string;
+}
+
 export class Program {
+    gl: OGLRenderingContext;
+    uniforms: { [name: string]: { value: any } };
+    id: number;
+    transparent: boolean;
+    cullFace: GLenum | false;
+    frontFace: GLenum;
+    depthTest: boolean;
+    depthWrite: boolean;
+    depthFunc: GLenum;
+    blendFunc: BlendFunc;
+    blendEquation: BlendEquation;
+    program: WebGLProgram;
+    uniformLocations: Map<UniformInfo, WebGLUniformLocation>;
+    attributeLocations: Map<WebGLActiveInfo, GLint>;
+    attributeOrder: string;
+
     constructor(
-        gl,
+        gl: OGLRenderingContext,
         {
             vertex,
             fragment,
@@ -21,7 +73,7 @@ export class Program {
             depthTest = true,
             depthWrite = true,
             depthFunc = gl.LESS,
-        } = {}
+        }: Partial<ProgramOptions> = {}
     ) {
         if (!gl.canvas) console.error('gl not passed as first argument to Program');
         this.gl = gl;
@@ -48,28 +100,29 @@ export class Program {
         }
 
         // compile vertex shader and log errors
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vertexShader, vertex);
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+        gl.shaderSource(vertexShader, vertex!);
         gl.compileShader(vertexShader);
         if (gl.getShaderInfoLog(vertexShader) !== '') {
             console.warn(`${gl.getShaderInfoLog(vertexShader)}\nVertex Shader\n${addLineNumbers(vertex)}`);
         }
 
         // compile fragment shader and log errors
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fragmentShader, fragment);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+        gl.shaderSource(fragmentShader, fragment!);
         gl.compileShader(fragmentShader);
         if (gl.getShaderInfoLog(fragmentShader) !== '') {
             console.warn(`${gl.getShaderInfoLog(fragmentShader)}\nFragment Shader\n${addLineNumbers(fragment)}`);
         }
 
         // compile program and log errors
-        this.program = gl.createProgram();
+        this.program = gl.createProgram()!;
         gl.attachShader(this.program, vertexShader);
         gl.attachShader(this.program, fragmentShader);
         gl.linkProgram(this.program);
         if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-            return console.warn(gl.getProgramInfoLog(this.program));
+            console.warn(gl.getProgramInfoLog(this.program));
+            return this;
         }
 
         // Remove shader once linked
@@ -80,11 +133,11 @@ export class Program {
         this.uniformLocations = new Map();
         let numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
         for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
-            let uniform = gl.getActiveUniform(this.program, uIndex);
-            this.uniformLocations.set(uniform, gl.getUniformLocation(this.program, uniform.name));
+            let uniform = gl.getActiveUniform(this.program, uIndex)! as UniformInfo;
+            this.uniformLocations.set(uniform, gl.getUniformLocation(this.program, uniform.name)!);
 
             // split uniforms' names to separate array and struct declarations
-            const split = uniform.name.match(/(\w+)/g);
+            const split = uniform.name.match(/(\w+)/g)!;
 
             uniform.uniformName = split[0];
             uniform.nameComponents = split.slice(1);
@@ -92,10 +145,10 @@ export class Program {
 
         // Get active attribute locations
         this.attributeLocations = new Map();
-        const locations = [];
+        const locations: string[] = [];
         const numAttribs = gl.getProgramParameter(this.program, gl.ACTIVE_ATTRIBUTES);
         for (let aIndex = 0; aIndex < numAttribs; aIndex++) {
-            const attribute = gl.getActiveAttrib(this.program, aIndex);
+            const attribute = gl.getActiveAttrib(this.program, aIndex)!;
             const location = gl.getAttribLocation(this.program, attribute.name);
             // Ignore special built-in inputs. eg gl_VertexID, gl_InstanceID
             if (location === -1) continue;
@@ -105,7 +158,7 @@ export class Program {
         this.attributeOrder = locations.join('');
     }
 
-    setBlendFunc(src, dst, srcAlpha, dstAlpha) {
+    setBlendFunc(src: GLenum, dst: GLenum, srcAlpha?: GLenum, dstAlpha?: GLenum): void {
         this.blendFunc.src = src;
         this.blendFunc.dst = dst;
         this.blendFunc.srcAlpha = srcAlpha;
@@ -113,12 +166,12 @@ export class Program {
         if (src) this.transparent = true;
     }
 
-    setBlendEquation(modeRGB, modeAlpha) {
+    setBlendEquation(modeRGB: GLenum, modeAlpha: GLenum): void {
         this.blendEquation.modeRGB = modeRGB;
         this.blendEquation.modeAlpha = modeAlpha;
     }
 
-    applyState() {
+    applyState(): void {
         if (this.depthTest) this.gl.renderer.enable(this.gl.DEPTH_TEST);
         else this.gl.renderer.disable(this.gl.DEPTH_TEST);
 
@@ -133,11 +186,11 @@ export class Program {
         this.gl.renderer.setDepthMask(this.depthWrite);
         this.gl.renderer.setDepthFunc(this.depthFunc);
         if (this.blendFunc.src)
-            this.gl.renderer.setBlendFunc(this.blendFunc.src, this.blendFunc.dst, this.blendFunc.srcAlpha, this.blendFunc.dstAlpha);
-        this.gl.renderer.setBlendEquation(this.blendEquation.modeRGB, this.blendEquation.modeAlpha);
+            this.gl.renderer.setBlendFunc(this.blendFunc.src, this.blendFunc.dst!, this.blendFunc.srcAlpha!, this.blendFunc.dstAlpha!);
+        this.gl.renderer.setBlendEquation(this.blendEquation.modeRGB!, this.blendEquation.modeAlpha!);
     }
 
-    use({ flipFaces = false } = {}) {
+    use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
         let textureUnit = -1;
         const programActive = this.gl.renderer.state.currentProgram === this.id;
 
@@ -159,7 +212,7 @@ export class Program {
                 } else if (Array.isArray(uniform.value)) {
                     break;
                 } else {
-                    uniform = undefined;
+                    uniform = undefined!;
                     break;
                 }
             }
@@ -182,7 +235,7 @@ export class Program {
 
             // For texture arrays, set uniform as an array of texture units instead of just one
             if (uniform.value.length && uniform.value[0].texture) {
-                const textureUnits = [];
+                const textureUnits: number[] = [];
                 uniform.value.forEach((value) => {
                     textureUnit = textureUnit + 1;
                     value.update(textureUnit);
@@ -199,25 +252,25 @@ export class Program {
         if (flipFaces) this.gl.renderer.setFrontFace(this.frontFace === this.gl.CCW ? this.gl.CW : this.gl.CCW);
     }
 
-    remove() {
+    remove(): void {
         this.gl.deleteProgram(this.program);
     }
 }
 
-function setUniform(gl, type, location, value) {
-    value = value.length ? flatten(value) : value;
+function setUniform(gl: OGLRenderingContext, type: number, location: WebGLUniformLocation, value: number | number[]) {
+    value = (value as number[]).length ? flatten(value as number[]) : (value as number);
     const setValue = gl.renderer.state.uniformLocations.get(location);
 
     // Avoid redundant uniform commands
-    if (value.length) {
-        if (setValue === undefined || setValue.length !== value.length) {
+    if ((value as any).length) {
+        if (setValue === undefined || (setValue as number[]).length !== (value as number[]).length) {
             // clone array to store as cache
-            gl.renderer.state.uniformLocations.set(location, value.slice(0));
+            gl.renderer.state.uniformLocations.set(location, (value as number[]).slice(0));
         } else {
             if (arraysEqual(setValue, value)) return;
 
             // Update cached array values
-            setValue.set ? setValue.set(value) : setArray(setValue, value);
+            (setValue as unknown as Float32Array).set ? (setValue as unknown as Float32Array).set(value as number[]) : setArray(setValue, value);
             gl.renderer.state.uniformLocations.set(location, setValue);
         }
     } else {
@@ -227,33 +280,33 @@ function setUniform(gl, type, location, value) {
 
     switch (type) {
         case 5126:
-            return value.length ? gl.uniform1fv(location, value) : gl.uniform1f(location, value); // FLOAT
+            return (value as number[]).length ? gl.uniform1fv(location, value as number[]) : gl.uniform1f(location, value as number); // FLOAT
         case 35664:
-            return gl.uniform2fv(location, value); // FLOAT_VEC2
+            return gl.uniform2fv(location, value as number[]); // FLOAT_VEC2
         case 35665:
-            return gl.uniform3fv(location, value); // FLOAT_VEC3
+            return gl.uniform3fv(location, value as number[]); // FLOAT_VEC3
         case 35666:
-            return gl.uniform4fv(location, value); // FLOAT_VEC4
+            return gl.uniform4fv(location, value as number[]); // FLOAT_VEC4
         case 35670: // BOOL
         case 5124: // INT
         case 35678: // SAMPLER_2D
         case 35680:
-            return value.length ? gl.uniform1iv(location, value) : gl.uniform1i(location, value); // SAMPLER_CUBE
+            return (value as number[]).length ? gl.uniform1iv(location, value as number[]) : gl.uniform1i(location, value as number); // SAMPLER_CUBE
         case 35671: // BOOL_VEC2
         case 35667:
-            return gl.uniform2iv(location, value); // INT_VEC2
+            return gl.uniform2iv(location, value as number[]); // INT_VEC2
         case 35672: // BOOL_VEC3
         case 35668:
-            return gl.uniform3iv(location, value); // INT_VEC3
+            return gl.uniform3iv(location, value as number[]); // INT_VEC3
         case 35673: // BOOL_VEC4
         case 35669:
-            return gl.uniform4iv(location, value); // INT_VEC4
+            return gl.uniform4iv(location, value as number[]); // INT_VEC4
         case 35674:
-            return gl.uniformMatrix2fv(location, false, value); // FLOAT_MAT2
+            return gl.uniformMatrix2fv(location, false, value as number[]); // FLOAT_MAT2
         case 35675:
-            return gl.uniformMatrix3fv(location, false, value); // FLOAT_MAT3
+            return gl.uniformMatrix3fv(location, false, value as number[]); // FLOAT_MAT3
         case 35676:
-            return gl.uniformMatrix4fv(location, false, value); // FLOAT_MAT4
+            return gl.uniformMatrix4fv(location, false, value as number[]); // FLOAT_MAT4
     }
 }
 

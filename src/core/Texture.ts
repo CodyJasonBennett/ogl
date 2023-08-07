@@ -3,17 +3,85 @@
 // TODO: need? encoding = linearEncoding
 // TODO: support non-compressed mipmaps uploads
 
+import { OGLRenderingContext, RenderState } from './Renderer';
+
 const emptyPixel = new Uint8Array(4);
 
-function isPowerOf2(value) {
+function isPowerOf2(value: number): boolean {
     return (value & (value - 1)) === 0;
 }
 
 let ID = 1;
 
+export type CompressedImage = {
+    isCompressedTexture?: boolean;
+} & {
+    data: Uint8Array;
+    width: number;
+    height: number;
+}[];
+
+export type ImageRepresentation = HTMLImageElement | HTMLVideoElement | HTMLImageElement[] | ArrayBufferView | CompressedImage;
+
+export interface TextureOptions {
+    image: ImageRepresentation;
+    target: number;
+    type: number;
+    format: number;
+    internalFormat: number;
+    wrapS: number;
+    wrapT: number;
+    generateMipmaps: boolean;
+    minFilter: number;
+    magFilter: number;
+    premultiplyAlpha: boolean;
+    unpackAlignment: number;
+    flipY: boolean;
+    level: number;
+    width: number;
+    height: number;
+    anisotropy: number;
+}
+
 export class Texture {
+    ext: string;
+    gl: OGLRenderingContext;
+    id: number;
+    name: string;
+    image?: ImageRepresentation;
+    target: number;
+    type: number;
+    format: number;
+    internalFormat: number;
+    wrapS: number;
+    wrapT: number;
+    generateMipmaps: boolean;
+    minFilter: number;
+    magFilter: number;
+    premultiplyAlpha: boolean;
+    unpackAlignment: number;
+    flipY: boolean;
+    level: number;
+    width: number;
+    height: number;
+    anisotropy: number;
+    texture: WebGLTexture;
+    store: {
+        image?: ImageRepresentation | null;
+    };
+    glState: RenderState;
+    state: {
+        minFilter: number;
+        magFilter: number;
+        wrapS: number;
+        wrapT: number;
+        anisotropy: number;
+    };
+    needsUpdate: boolean;
+    onUpdate?: () => void;
+
     constructor(
-        gl,
+        gl: OGLRenderingContext,
         {
             image,
             target = gl.TEXTURE_2D,
@@ -32,7 +100,7 @@ export class Texture {
             level = 0,
             width, // used for RenderTargets or Data Textures
             height = width,
-        } = {}
+        }: Partial<TextureOptions> = {}
     ) {
         this.gl = gl;
         this.id = ID++;
@@ -50,11 +118,11 @@ export class Texture {
         this.premultiplyAlpha = premultiplyAlpha;
         this.unpackAlignment = unpackAlignment;
         this.flipY = flipY;
-        this.anisotropy = Math.min(anisotropy, this.gl.renderer.parameters.maxAnisotropy);
+        this.anisotropy = Math.min(anisotropy, this.gl.renderer.parameters.maxAnisotropy!);
         this.level = level;
-        this.width = width;
-        this.height = height;
-        this.texture = this.gl.createTexture();
+        this.width = width!;
+        this.height = height!;
+        this.texture = this.gl.createTexture()!;
 
         this.store = {
             image: null,
@@ -64,7 +132,7 @@ export class Texture {
         this.glState = this.gl.renderer.state;
 
         // State store to avoid redundant calls for per-texture state
-        this.state = {};
+        this.state = {} as any;
         this.state.minFilter = this.gl.NEAREST_MIPMAP_LINEAR;
         this.state.magFilter = this.gl.LINEAR;
         this.state.wrapS = this.gl.REPEAT;
@@ -72,14 +140,14 @@ export class Texture {
         this.state.anisotropy = 0;
     }
 
-    bind() {
+    bind(): void {
         // Already bound to active texture unit
         if (this.glState.textureUnits[this.glState.activeTextureUnit] === this.id) return;
         this.gl.bindTexture(this.target, this.texture);
         this.glState.textureUnits[this.glState.activeTextureUnit] = this.id;
     }
 
-    update(textureUnit = 0) {
+    update(textureUnit: number = 0): void {
         const needsUpdate = !(this.image === this.store.image && !this.needsUpdate);
 
         // Make sure that texture is bound to its texture unit
@@ -137,9 +205,9 @@ export class Texture {
         }
 
         if (this.image) {
-            if (this.image.width) {
-                this.width = this.image.width;
-                this.height = this.image.height;
+            if ((this.image as any).width) {
+                this.width = (this.image as any).width;
+                this.height = (this.image as any).height;
             }
 
             if (this.target === this.gl.TEXTURE_CUBE_MAP) {
@@ -157,9 +225,9 @@ export class Texture {
             } else if (ArrayBuffer.isView(this.image)) {
                 // Data texture
                 this.gl.texImage2D(this.target, this.level, this.internalFormat, this.width, this.height, 0, this.format, this.type, this.image);
-            } else if (this.image.isCompressedTexture) {
+            } else if ((this.image as any).isCompressedTexture) {
                 // Compressed texture
-                for (let level = 0; level < this.image.length; level++) {
+                for (let level = 0; level < (this.image as unknown as number[]).length; level++) {
                     this.gl.compressedTexImage2D(
                         this.target,
                         level,
@@ -172,12 +240,12 @@ export class Texture {
                 }
             } else {
                 // Regular texture
-                this.gl.texImage2D(this.target, this.level, this.internalFormat, this.format, this.type, this.image);
+                this.gl.texImage2D(this.target, this.level, this.internalFormat, this.format, this.type, this.image as TexImageSource);
             }
 
             if (this.generateMipmaps) {
                 // For WebGL1, if not a power of 2, turn off mips, set wrapping to clamp to edge and minFilter to linear
-                if (!this.gl.renderer.isWebgl2 && (!isPowerOf2(this.image.width) || !isPowerOf2(this.image.height))) {
+                if (!this.gl.renderer.isWebgl2 && (!isPowerOf2((this.image as any).width) || !isPowerOf2((this.image as any).height))) {
                     this.generateMipmaps = false;
                     this.wrapS = this.wrapT = this.gl.CLAMP_TO_EDGE;
                     this.minFilter = this.gl.LINEAR;
